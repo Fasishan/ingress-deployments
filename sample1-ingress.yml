@@ -1,0 +1,65 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: dark-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: newdarkweb.fasi.xyz 
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: dark-service
+          servicePort: 80
+
+---
+#Deployments
+
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: dark-deployment
+spec:
+  selector:
+    matchLabels:
+      app: dark-deployment
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: dark-deployment
+    spec:
+      containers:
+      - name: dark-deployment
+        image: fasiuddin1/darkness-html:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dark-service
+  labels:
+    app: dark-deployment
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+    - port: 443
+      name: https
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: dark-deployment

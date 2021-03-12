@@ -1,0 +1,65 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: devopsimage-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: devopsweb.fasi.xyz 
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: devopsimage-service
+          servicePort: 80
+
+---
+#Deployments
+
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: devopsimage-deployment
+spec:
+  selector:
+    matchLabels:
+      app: devopsimage-deployment
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: devopsimage-deployment
+    spec:
+      containers:
+      - name: devopsimage-deployment
+        image: fasiuddin1/azureproject:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: devopsimage-service
+  labels:
+    app: devopsimage-deployment
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+    - port: 443
+      name: https
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: devopsimage-deployment

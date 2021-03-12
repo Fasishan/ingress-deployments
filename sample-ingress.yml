@@ -1,0 +1,65 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: moon-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: newweb.fasi.xyz 
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: moon-service
+          servicePort: 80
+
+---
+#Deployments
+
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: moon-deployment
+spec:
+  selector:
+    matchLabels:
+      app: moon-deployment
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: moon-deployment
+    spec:
+      containers:
+      - name: moon-deployment
+        image: fasiuddin1/moonweb:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: moon-service
+  labels:
+    app: moon-deployment
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+    - port: 443
+      name: https
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: moon-deployment
